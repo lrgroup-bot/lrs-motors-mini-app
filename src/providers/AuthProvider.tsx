@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useTelegram } from "@/providers/TelegramProvider";
 
 export type UserRole = "director" | "ceo" | "staff" | "guest";
@@ -54,7 +53,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const { user: telegramUser } = useTelegram();
 
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -62,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const savedUser = localStorage.getItem("lrs-user");
+
     if (savedUser) {
       setUser(JSON.parse(savedUser));
       setIsLoading(false);
@@ -69,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (telegramUser) {
-      const mockUser: AuthUser = {
+      const tgUser: AuthUser = {
         id: telegramUser.id.toString(),
         name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
         email: telegramUser.username
@@ -79,8 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         permissions: ROLE_PERMISSIONS.director,
       };
 
-      setUser(mockUser);
-      localStorage.setItem("lrs-user", JSON.stringify(mockUser));
+      setUser(tgUser);
+      localStorage.setItem("lrs-user", JSON.stringify(tgUser));
     }
 
     setIsLoading(false);
@@ -95,15 +94,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       permissions: ROLE_PERMISSIONS.director,
     };
 
-    setUser(mockUser);
     localStorage.setItem("lrs-user", JSON.stringify(mockUser));
-    router.push("/dashboard");
+    setUser(mockUser);
+
+    window.location.href = "/dashboard";
   };
 
   const logout = () => {
-    setUser(null);
     localStorage.removeItem("lrs-user");
-    router.push("/");
+    setUser(null);
+
+    window.location.href = "/";
   };
 
   const hasPermission = (permission: string) => {
