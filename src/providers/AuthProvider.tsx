@@ -1,15 +1,14 @@
 "use client";
-"use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+} from "react";
 import { useRouter } from "next/navigation";
-useEffect(() => {
-  if (typeof window === "undefined") return;
+import { useTelegram } from "@/providers/TelegramProvider";
 
-  import("@telegram-apps/sdk").then((tg) => {
-    // Put your Telegram SDK initialization code here.
-  });
-}, []);
 export type UserRole = "director" | "ceo" | "staff" | "guest";
 
 interface AuthUser {
@@ -19,8 +18,6 @@ interface AuthUser {
   role: UserRole;
   permissions: string[];
 }
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -57,41 +54,60 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "manage_settings",
     "export_data",
   ],
-  staff: ["view_dashboard", "view_inventory", "manage_customers", "manage_sales"],
+  staff: [
+    "view_dashboard",
+    "view_inventory",
+    "manage_customers",
+    "manage_sales",
+  ],
   guest: ["view_dashboard", "view_inventory"],
 };
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
   const { user: telegramUser } = useTelegram();
+
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     if (telegramUser) {
       const mockUser: AuthUser = {
         id: telegramUser.id.toString(),
-        name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
-        email: telegramUser.username ? `${telegramUser.username}@telegram.com` : undefined,
+        name: `${telegramUser.first_name} ${
+          telegramUser.last_name || ""
+        }`.trim(),
+        email: telegramUser.username
+          ? `${telegramUser.username}@telegram.com`
+          : undefined,
         role: "director",
         permissions: ROLE_PERMISSIONS.director,
       };
+
       setUser(mockUser);
     }
+
     setIsLoading(false);
   }, [telegramUser]);
 
-  
-const login = async (email: string, _password: string) => {
-  console.log("Login attempt:", email);
-  router.push("/dashboard");
-};
+  const login = async (email: string, _password: string) => {
+    console.log("Login attempt:", email);
+    router.push("/dashboard");
+  };
 
   const logout = () => {
     setUser(null);
+    router.push("/");
   };
 
-  const hasPermission = (permission: string): boolean => {
-    return user?.permissions.includes(permission) || false;
+  const hasPermission = (permission: string) => {
+    return user?.permissions.includes(permission) ?? false;
   };
 
   return (
@@ -112,8 +128,10 @@ const login = async (email: string, _password: string) => {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+
+  if (!context) {
     throw new Error("useAuth must be used within AuthProvider");
   }
+
   return context;
 }
