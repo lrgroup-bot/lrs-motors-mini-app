@@ -2,7 +2,7 @@
 
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader } from "@/components/Card";
-import { Car, Image as ImageIcon, FileText } from "lucide-react";
+import { Car } from "lucide-react";
 import { useState } from "react";
 
 interface Vehicle {

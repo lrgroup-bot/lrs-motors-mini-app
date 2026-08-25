@@ -2,7 +2,7 @@
 
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader } from "@/components/Card";
-import { Users, Mail, Phone, MapPin } from "lucide-react";
+import { Users } from "lucide-react";
 
 export function Customers() {
   return (
