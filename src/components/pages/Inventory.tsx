@@ -1,7 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/PageHeader";
-import { Card, CardContent, CardHeader } from "@/components/Card";
+import { Card, CardContent } from "@/components/Card";
 import { Car } from "lucide-react";
 import { useState } from "react";
 
