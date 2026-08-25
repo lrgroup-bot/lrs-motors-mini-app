@@ -1,9 +1,15 @@
 "use client";
+"use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTelegram } from "./TelegramProvider";
+useEffect(() => {
+  if (typeof window === "undefined") return;
 
+  import("@telegram-apps/sdk").then((tg) => {
+    // Put your Telegram SDK initialization code here.
+  });
+}, []);
 export type UserRole = "director" | "ceo" | "staff" | "guest";
 
 interface AuthUser {
