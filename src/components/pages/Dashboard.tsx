@@ -19,7 +19,6 @@ import {
   Pencil,
   Trash2,
   X,
-  RefreshCw,
   Fuel,
   Gauge,
   Settings2,
