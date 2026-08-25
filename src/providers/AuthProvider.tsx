@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useTelegram } from "./TelegramProvider";
 
 export type UserRole = "director" | "ceo" | "staff" | "guest";
@@ -12,6 +13,8 @@ interface AuthUser {
   role: UserRole;
   permissions: string[];
 }
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -71,10 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, [telegramUser]);
 
-  import { useRouter } from "next/navigation";
-
-const router = useRouter();
-
+  
 const login = async (email: string, _password: string) => {
   console.log("Login attempt:", email);
   router.push("/dashboard");
