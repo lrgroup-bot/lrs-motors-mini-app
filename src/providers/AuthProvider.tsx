@@ -1,11 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-} from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTelegram } from "@/providers/TelegramProvider";
 
@@ -54,20 +49,11 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "manage_settings",
     "export_data",
   ],
-  staff: [
-    "view_dashboard",
-    "view_inventory",
-    "manage_customers",
-    "manage_sales",
-  ],
+  staff: ["view_dashboard", "view_inventory", "manage_customers", "manage_sales"],
   guest: ["view_dashboard", "view_inventory"],
 };
 
-export function AuthProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user: telegramUser } = useTelegram();
 
@@ -75,14 +61,17 @@ export function AuthProvider({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const savedUser = localStorage.getItem("lrs-user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+      setIsLoading(false);
+      return;
+    }
 
     if (telegramUser) {
       const mockUser: AuthUser = {
         id: telegramUser.id.toString(),
-        name: `${telegramUser.first_name} ${
-          telegramUser.last_name || ""
-        }`.trim(),
+        name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
         email: telegramUser.username
           ? `${telegramUser.username}@telegram.com`
           : undefined,
@@ -91,18 +80,29 @@ export function AuthProvider({
       };
 
       setUser(mockUser);
+      localStorage.setItem("lrs-user", JSON.stringify(mockUser));
     }
 
     setIsLoading(false);
   }, [telegramUser]);
 
   const login = async (email: string, _password: string) => {
-    console.log("Login attempt:", email);
+    const mockUser: AuthUser = {
+      id: "1",
+      name: "LRS Motors Admin",
+      email,
+      role: "director",
+      permissions: ROLE_PERMISSIONS.director,
+    };
+
+    setUser(mockUser);
+    localStorage.setItem("lrs-user", JSON.stringify(mockUser));
     router.push("/dashboard");
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem("lrs-user");
     router.push("/");
   };
 
