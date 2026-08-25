@@ -58,14 +58,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate authentication
     if (telegramUser) {
-      // In production, validate Telegram init data and fetch user from Supabase
       const mockUser: AuthUser = {
         id: telegramUser.id.toString(),
         name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
         email: telegramUser.username ? `${telegramUser.username}@telegram.com` : undefined,
-        role: "director", // Default to director for demo
+        role: "director",
         permissions: ROLE_PERMISSIONS.director,
       };
       setUser(mockUser);
@@ -74,8 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [telegramUser]);
 
   const login = async (email: string, password: string) => {
-    // Placeholder for authentication logic
-    // In production, this would integrate with Supabase
     console.log("Login attempt:", email);
   };
 

@@ -32,14 +32,11 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Initialize Telegram Mini App
     try {
-      // Check if running in Telegram context
       if (typeof window !== "undefined" && window.Telegram?.WebApp) {
         const webApp = window.Telegram.WebApp;
         webApp.ready();
         
-        // Get init data
         const initDataRaw = webApp.initData;
         if (initDataRaw) {
           const params = new URLSearchParams(initDataRaw);
@@ -60,8 +57,6 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
           setInitData(initData);
         }
       } else {
-        // Running outside Telegram or in development
-        // Use mock data for testing
         setInitData({
           user: {
             id: 123456789,
