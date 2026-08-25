@@ -21,15 +21,13 @@ class MainActivity : ComponentActivity() {
 fun LrsMotorsApp() {
     var screen by remember { mutableStateOf("home") }
     MaterialTheme {
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(selected = screen == "home", onClick = { screen = "home" }, icon = {}, label = { Text("Home") })
-                    NavigationBarItem(selected = screen == "vehicle", onClick = { screen = "vehicle" }, icon = {}, label = { Text("Add Vehicle") })
-                    NavigationBarItem(selected = screen == "inventory", onClick = { screen = "inventory" }, icon = {}, label = { Text("Inventory") })
-                }
+        Scaffold(bottomBar = {
+            NavigationBar {
+                NavigationBarItem(selected = screen == "home", onClick = { screen = "home" }, icon = {}, label = { Text("Home") })
+                NavigationBarItem(selected = screen == "vehicle", onClick = { screen = "vehicle" }, icon = {}, label = { Text("Add Vehicle") })
+                NavigationBarItem(selected = screen == "inventory", onClick = { screen = "inventory" }, icon = {}, label = { Text("Inventory") })
             }
-        ) { padding ->
+        }) { padding ->
             when (screen) {
                 "vehicle" -> VehicleDataScreen(Modifier.padding(padding))
                 "inventory" -> InventoryScreen(Modifier.padding(padding))
@@ -44,19 +42,18 @@ fun DashboardScreen(modifier: Modifier = Modifier, onAdd: () -> Unit) {
     Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("LRS Motors", style = MaterialTheme.typography.headlineMedium)
         Text("Dealership Management", style = MaterialTheme.typography.bodyLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatCard("Available", "0")
-            StatCard("Sold", "0")
-            StatCard("Reserved", "0")
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            StatCard("Available", "0", Modifier.weight(1f))
+            StatCard("Sold", "0", Modifier.weight(1f))
+            StatCard("Reserved", "0", Modifier.weight(1f))
         }
         Button(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text("+ Add Vehicle") }
-        OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text("Upload RC / Scan RC") }
     }
 }
 
 @Composable
-fun StatCard(title: String, value: String) {
-    Card(modifier = Modifier.weight(1f)) { Column(Modifier.padding(14.dp)) { Text(value, style = MaterialTheme.typography.headlineSmall); Text(title) } }
+fun StatCard(title: String, value: String, modifier: Modifier = Modifier) {
+    Card(modifier = modifier) { Column(Modifier.padding(14.dp)) { Text(value, style = MaterialTheme.typography.headlineSmall); Text(title) } }
 }
 
 @Composable
@@ -74,9 +71,9 @@ fun VehicleDataScreen(modifier: Modifier = Modifier) {
 
     LazyColumn(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("Vehicle Data", style = MaterialTheme.typography.headlineMedium) }
-        item { Text("Upload an RC PDF or scan the RC, then verify every field before saving.") }
-        item { Button(onClick = { /* next: PDF picker + OCR */ }, modifier = Modifier.fillMaxWidth()) { Text("Upload RC PDF") } }
-        item { OutlinedButton(onClick = { /* next: CameraX + ML Kit */ }, modifier = Modifier.fillMaxWidth()) { Text("Scan RC with Camera") } }
+        item { Text("Choose an RC PDF or JPEG/image file. The app will OCR it and prefill the fields for manual verification.") }
+        item { Button(onClick = { /* next: Android PDF picker + OCR */ }, modifier = Modifier.fillMaxWidth()) { Text("Upload RC PDF") } }
+        item { OutlinedButton(onClick = { /* next: Android image picker + OCR */ }, modifier = Modifier.fillMaxWidth()) { Text("Upload RC Image (JPEG/PNG)") } }
         item { Field("Registration Number", registration) { registration = it } }
         item { Field("Owner Name", owner) { owner = it } }
         item { Field("Brand", brand) { brand = it } }
