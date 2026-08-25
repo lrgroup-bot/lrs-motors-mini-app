@@ -1,0 +1,160 @@
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { LockKeyhole, Mail, Car, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+
+export default function LoginPage() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("admin@lrsmotors.com");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function checkSession() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        router.replace("/dashboard");
+      } else {
+        setChecking(false);
+      }
+    }
+
+    checkSession();
+  }, [router]);
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError("");
+    setLoading(true);
+
+    const { error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+    if (loginError) {
+      setError(loginError.message);
+      setLoading(false);
+      return;
+    }
+
+    router.replace("/dashboard");
+  }
+
+  if (checking) {
+    return (
+      <main className="min-h-screen bg-lrs-light flex items-center justify-center">
+        <Loader2 className="w-7 h-7 animate-spin text-gray-500" />
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-lrs-light flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="bg-lrs-primary text-white p-8 text-center">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+              <Car className="w-9 h-9" />
+            </div>
+
+            <h1 className="text-2xl font-bold">
+              LRS Motors
+            </h1>
+
+            <p className="text-sm text-white/80 mt-1">
+              Admin Dashboard
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleLogin}
+            className="p-6 sm:p-8 space-y-5"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(event.target.value)
+                  }
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg outline-none focus:border-lrs-primary focus:ring-2 focus:ring-lrs-primary/10"
+                  placeholder="admin@lrsmotors.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+
+              <div className="relative">
+                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+
+                <input
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(event.target.value)
+                  }
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg outline-none focus:border-lrs-primary focus:ring-2 focus:ring-lrs-primary/10"
+                  placeholder="Enter your password"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-lrs-primary text-white font-semibold hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed transition-opacity"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  <LockKeyhole className="w-5 h-5" />
+                  Sign In
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center text-xs text-gray-500 mt-5">
+          Authorized personnel only
+        </p>
+      </div>
+    </main>
+  );
+}
