@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "@types/jpeg-js": "^0.4.4",
     "@types/node": "^20.0.0",
     "@types/pngjs": "^6.0.5",
     "@types/react": "^19.0.0",
