@@ -1,7 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { useTelegram } from "@/providers/TelegramProvider";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type UserRole = "director" | "ceo" | "staff" | "guest";
 
@@ -25,103 +24,54 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  director: [
-    "view_dashboard",
-    "manage_inventory",
-    "manage_customers",
-    "manage_sales",
-    "manage_documents",
-    "view_reports",
-    "manage_marketing",
-    "manage_settings",
-    "manage_users",
-    "export_data",
-  ],
-  ceo: [
-    "view_dashboard",
-    "manage_inventory",
-    "manage_customers",
-    "manage_sales",
-    "manage_documents",
-    "view_reports",
-    "manage_marketing",
-    "manage_settings",
-    "export_data",
-  ],
+  director: ["view_dashboard", "manage_inventory", "view_inventory", "manage_customers", "manage_sales", "manage_documents", "view_reports", "manage_marketing", "manage_settings", "manage_users", "export_data"],
+  ceo: ["view_dashboard", "manage_inventory", "view_inventory", "manage_customers", "manage_sales", "manage_documents", "view_reports", "manage_marketing", "manage_settings", "export_data"],
   staff: ["view_dashboard", "view_inventory", "manage_customers", "manage_sales"],
   guest: ["view_dashboard", "view_inventory"],
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { user: telegramUser } = useTelegram();
-
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("lrs-user");
-
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    try {
+      const savedUser = window.localStorage.getItem("lrs-user");
+      if (savedUser) setUser(JSON.parse(savedUser));
+    } catch {
+      window.localStorage.removeItem("lrs-user");
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    if (telegramUser) {
-      const tgUser: AuthUser = {
-        id: telegramUser.id.toString(),
-        name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
-        email: telegramUser.username
-          ? `${telegramUser.username}@telegram.com`
-          : undefined,
-        role: "director",
-        permissions: ROLE_PERMISSIONS.director,
-      };
-
-      setUser(tgUser);
-      localStorage.setItem("lrs-user", JSON.stringify(tgUser));
-    }
-
-    setIsLoading(false);
-  }, [telegramUser]);
+  }, []);
 
   const login = async (email: string, _password: string) => {
-    const mockUser: AuthUser = {
-      id: "1",
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) throw new Error("Email is required");
+
+    const pcUser: AuthUser = {
+      id: normalizedEmail,
       name: "LRS Motors Admin",
-      email,
+      email: normalizedEmail,
       role: "director",
       permissions: ROLE_PERMISSIONS.director,
     };
 
-    localStorage.setItem("lrs-user", JSON.stringify(mockUser));
-    setUser(mockUser);
-
+    window.localStorage.setItem("lrs-user", JSON.stringify(pcUser));
+    setUser(pcUser);
     window.location.href = "/dashboard";
   };
 
   const logout = () => {
-    localStorage.removeItem("lrs-user");
+    window.localStorage.removeItem("lrs-user");
     setUser(null);
-
-    window.location.href = "/";
+    window.location.href = "/login";
   };
 
-  const hasPermission = (permission: string) => {
-    return user?.permissions.includes(permission) ?? false;
-  };
+  const hasPermission = (permission: string) => user?.permissions.includes(permission) ?? false;
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        logout,
-        hasPermission,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );
@@ -129,10 +79,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }
