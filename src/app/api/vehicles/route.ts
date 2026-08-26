@@ -1,43 +1,6 @@
-import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { readStore, writeStore, type VehicleRecord } from "@/lib/serverStore";
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-export async function GET() {
-  const store = await readStore();
-  return NextResponse.json(store.vehicles);
-}
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  if (!body.brand?.trim() || !body.model?.trim() || !body.price?.trim()) return NextResponse.json({ error: "Brand, model and price are required." }, { status: 400 });
-  const store = await readStore();
-  const now = new Date().toISOString();
-  const vehicle: VehicleRecord = { id: randomUUID(), brand: body.brand.trim(), model: body.model.trim(), year: String(body.year || ""), km: String(body.km || ""), fuel: body.fuel || "Petrol", transmission: body.transmission || "Manual", price: body.price.trim(), status: body.status || "Available", refinance: Boolean(body.refinance), createdAt: now, updatedAt: now };
-  store.vehicles.unshift(vehicle);
-  await writeStore(store);
-  return NextResponse.json(vehicle, { status: 201 });
-}
-
-export async function PUT(request: Request) {
-  const body = await request.json();
-  const store = await readStore();
-  const index = store.vehicles.findIndex(v => v.id === body.id);
-  if (index < 0) return NextResponse.json({ error: "Vehicle not found." }, { status: 404 });
-  store.vehicles[index] = { ...store.vehicles[index], ...body, id: store.vehicles[index].id, updatedAt: new Date().toISOString() };
-  await writeStore(store);
-  return NextResponse.json(store.vehicles[index]);
-}
-
-export async function DELETE(request: Request) {
-  const id = new URL(request.url).searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "Vehicle id is required." }, { status: 400 });
-  const store = await readStore();
-  const before = store.vehicles.length;
-  store.vehicles = store.vehicles.filter(v => v.id !== id);
-  if (before === store.vehicles.length) return NextResponse.json({ error: "Vehicle not found." }, { status: 404 });
-  await writeStore(store);
-  return NextResponse.json({ ok: true });
-}
+import{NextResponse}from"next/server";import{randomUUID}from"crypto";import{db}from"@/lib/database";
+export const runtime="nodejs";export const dynamic="force-dynamic";
+export async function GET(){return NextResponse.json(db.prepare(`SELECT * FROM vehicles ORDER BY created_at DESC`).all())}
+export async function POST(request:Request){try{const b=await request.json();const make=String(b.make||b.brand||"").trim(),model=String(b.model||"").trim(),reg=String(b.registrationNumber||b.regNumber||"").trim().toUpperCase();if(!make||!model||!reg)return NextResponse.json({error:"Registration number, make and model are required."},{status:400});const id=randomUUID(),now=new Date().toISOString();db.prepare(`INSERT INTO vehicles(id,registration_number,make,model,variant,year,fuel,transmission,kilometers,status,remarks,workflow_status,submitted_by,submitted_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id,reg,make,model,b.variant||null,Number(b.year)||null,b.fuel||null,b.transmission||null,Number(b.kilometers??b.km)||0,"available",b.remarks||null,b.workflowStatus||"draft",b.submittedBy||null,b.workflowStatus==="management_review"?now:null,now,now);return NextResponse.json({id,registration_number:reg,make,model,workflow_status:b.workflowStatus||"draft"},{status:201})}catch(e){const msg=e instanceof Error?e.message:"Unable to create vehicle";return NextResponse.json({error:msg.includes("UNIQUE")?"Registration number already exists.":msg},{status:400})}}
+export async function PUT(request:Request){const b=await request.json();if(!b.id)return NextResponse.json({error:"Vehicle id is required."},{status:400});const existing=db.prepare(`SELECT * FROM vehicles WHERE id=?`).get(b.id) as Record<string,unknown>|undefined;if(!existing)return NextResponse.json({error:"Vehicle not found."},{status:404});const now=new Date().toISOString();db.prepare(`UPDATE vehicles SET registration_number=?,make=?,model=?,variant=?,year=?,fuel=?,transmission=?,kilometers=?,remarks=?,workflow_status=?,updated_at=? WHERE id=?`).run(String(b.registrationNumber??existing.registration_number).toUpperCase(),b.make??existing.make,b.model??existing.model,b.variant??existing.variant,b.year??existing.year,b.fuel??existing.fuel,b.transmission??existing.transmission,b.kilometers??existing.kilometers,b.remarks??existing.remarks,b.workflowStatus??existing.workflow_status,now,b.id);return NextResponse.json({ok:true})}
+export async function DELETE(request:Request){const id=new URL(request.url).searchParams.get("id");if(!id)return NextResponse.json({error:"Vehicle id is required."},{status:400});db.prepare(`DELETE FROM vehicles WHERE id=?`).run(id);return NextResponse.json({ok:true})}
