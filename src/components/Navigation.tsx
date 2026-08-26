@@ -1,79 +1,9 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BarChart3,
-  Car,
-  Database,
-  Users,
-  DollarSign,
-  FileText,
-  TrendingUp,
-  Megaphone,
-  Settings,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, Car, Users, BadgeIndianRupee, FileText, BarChart3, Settings, Menu, X, Crown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/inventory", label: "Inventory", icon: Car },
-  { href: "/vehicle-data", label: "Vehicle Data", icon: Database },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/sales", label: "Sales", icon: DollarSign },
-  { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/reports", label: "Reports", icon: TrendingUp },
-  { href: "/marketing", label: "Marketing", icon: Megaphone },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
-export function Navigation() {
-  const pathname = usePathname();
-  const { user } = useAuth();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-
-  return (
-    <>
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 flex items-center justify-between p-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-lrs-blue rounded-lg flex items-center justify-center"><Car className="w-5 h-5 text-white" /></div>
-          <span className="font-bold text-lrs-dark">LRS Motors</span>
-        </div>
-        <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="p-2 hover:bg-gray-100 rounded-lg">
-          {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-
-      {isMobileOpen && (
-        <nav className="md:hidden fixed top-16 left-0 right-0 bg-white border-b border-gray-200 z-40">
-          <div className="p-4 space-y-2">
-            {navItems.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href;
-              return <Link key={href} href={href} onClick={() => setIsMobileOpen(false)}><div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive ? "bg-lrs-blue text-white" : "text-gray-700 hover:bg-gray-100"}`}><Icon className="w-5 h-5" /><span className="font-medium">{label}</span></div></Link>;
-            })}
-          </div>
-        </nav>
-      )}
-
-      <nav className="hidden md:fixed md:left-0 md:top-0 md:bottom-0 md:w-64 md:bg-white md:border-r md:border-gray-200 md:flex md:flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3"><div className="w-10 h-10 bg-lrs-blue rounded-lg flex items-center justify-center"><Car className="w-6 h-6 text-white" /></div><div><h1 className="font-bold text-lrs-dark text-lg">LRS Motors</h1><p className="text-xs text-gray-500 uppercase tracking-wider">Dealership</p></div></div>
-        </div>
-
-        {user && <div className="px-6 py-4 border-b border-gray-200 bg-lrs-light"><p className="text-sm font-medium text-gray-900">{user.name}</p><p className="text-xs text-gray-500 mt-1 capitalize">{user.role}</p></div>}
-
-        <div className="flex-1 overflow-y-auto py-4"><div className="space-y-2 px-3">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href;
-            return <Link key={href} href={href}><div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium ${isActive ? "bg-lrs-blue text-white shadow-md" : "text-gray-700 hover:bg-gray-100"}`}><Icon className="w-5 h-5" /><span>{label}</span></div></Link>;
-          })}
-        </div></div>
-
-        <div className="border-t border-gray-200 p-4 text-center text-xs text-gray-500"><p>LRS Motors v0.1.0</p><p className="mt-1">Telegram Mini App</p></div>
-      </nav>
-    </>
-  );
-}
+const navItems=[{href:"/dashboard",label:"Dashboard",icon:LayoutDashboard},{href:"/inventory",label:"Inventory",icon:Car},{href:"/customers",label:"Customers",icon:Users},{href:"/sales",label:"Sales",icon:BadgeIndianRupee},{href:"/documents",label:"Documents",icon:FileText},{href:"/reports",label:"Reports",icon:BarChart3},{href:"/settings",label:"Settings",icon:Settings}];
+export function Navigation(){const pathname=usePathname();const{user}=useAuth();const[open,setOpen]=useState(false);const links=<>{navItems.map(({href,label,icon:Icon})=>{const active=pathname===href;return <Link key={href} href={href} onClick={()=>setOpen(false)} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${active?"border border-amber-400/40 bg-gradient-to-r from-amber-400/20 to-transparent text-amber-300 shadow-[inset_3px_0_0_#f5c451]":"text-zinc-400 hover:bg-white/5 hover:text-white"}`}><Icon className="h-5 w-5"/><span>{label}</span></Link>})}</>;
+return <><div className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-amber-400/15 bg-[#080a0b]/95 px-4 text-white backdrop-blur md:hidden"><div><div className="text-xl font-black italic tracking-wider text-amber-300">LRS</div><div className="text-[9px] tracking-[.32em] text-amber-400">MOTORS</div></div><button onClick={()=>setOpen(!open)} className="rounded-lg border border-white/10 p-2">{open?<X/>:<Menu/>}</button></div>{open&&<nav className="fixed inset-x-0 top-16 z-40 border-b border-amber-400/15 bg-[#080a0b] p-4 md:hidden">{links}</nav>}<nav className="hidden md:fixed md:inset-y-0 md:left-0 md:z-40 md:flex md:w-64 md:flex-col md:border-r md:border-amber-400/15 md:bg-[radial-gradient(circle_at_top,#17130a_0,#090b0c_34%,#050607_100%)] md:text-white"><div className="border-b border-amber-400/15 px-7 py-7"><div className="text-3xl font-black italic tracking-wider text-amber-300">LRS</div><div className="mt-[-4px] text-xs font-bold tracking-[.42em] text-amber-400">MOTORS</div><div className="mt-2 text-[9px] tracking-[.24em] text-zinc-500">DRIVE YOUR DREAM</div></div><div className="flex-1 space-y-1 overflow-y-auto px-3 py-5">{links}</div><div className="m-4 rounded-2xl border border-amber-400/35 bg-amber-400/[.04] p-4"><div className="flex items-center gap-3"><div className="rounded-full border border-amber-400/50 p-2 text-amber-300"><Crown className="h-5 w-5"/></div><div><p className="font-semibold text-amber-200">{user?.name||"Director"}</p><p className="text-xs capitalize text-zinc-500">{user?.role||"Super Admin"}</p></div></div><div className="mt-3 flex items-center gap-2 text-xs text-zinc-400"><span className="h-2 w-2 rounded-full bg-green-500"/>PC Server Online</div></div><div className="px-5 pb-5 text-[10px] tracking-widest text-zinc-600">LRS MOTORS • PC SERVER</div></nav></>}
