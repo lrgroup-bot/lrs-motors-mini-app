@@ -1,7 +1,3 @@
 "use client";
-
-import { Dashboard } from "@/components/pages/Dashboard";
-
-export default function DashboardPage() {
-  return <Dashboard />;
-}
+import{useAuth}from"@/providers/AuthProvider";import{Dashboard}from"@/components/pages/Dashboard";import{AssociateDashboard}from"@/components/AssociateDashboard";
+export default function DashboardPage(){const{user,isLoading}=useAuth();if(isLoading)return <div className="min-h-screen bg-black p-8 text-amber-300">Loading...</div>;const management=user?.role==="director"||user?.role==="ceo";return management?<Dashboard/>:<AssociateDashboard/>}
