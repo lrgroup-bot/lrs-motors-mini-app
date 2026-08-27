@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "server": "next start -H 0.0.0.0 -p 3000",
+    "marketing-worker": "node scripts/ai-marketing-worker.mjs",
     "lint": "next lint"
   },
   "dependencies": {
