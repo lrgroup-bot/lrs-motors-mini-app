@@ -8,6 +8,8 @@
     "start": "next start -H 0.0.0.0 -p 3000",
     "server": "next start -H 0.0.0.0 -p 3000",
     "marketing-worker": "node scripts/ai-marketing-worker.mjs",
+    "preflight": "node scripts/preflight.mjs",
+    "test:realworld": "npm run preflight && npm run build",
     "lint": "next lint"
   },
   "dependencies": {
@@ -28,7 +30,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.0.0",
     "@types/pdf-parse": "^1.1.5",
-    "@types/pngjs": "^6.0.5",
+    "@types/pngjs": "^7.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.14",
