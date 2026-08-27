@@ -1,39 +1,7 @@
 "use client";
-
-import { PageHeader } from "@/components/PageHeader";
-import { Card, CardContent, CardHeader } from "@/components/Card";
-import { Megaphone } from "lucide-react";
-
-export function Marketing() {
-  return (
-    <div className="min-h-screen bg-lrs-light">
-      <PageHeader
-        title="Marketing"
-        description="Manage marketing campaigns and vehicle listings"
-      />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Megaphone className="w-6 h-6 text-lrs-blue" />
-              <h2 className="text-xl font-semibold text-gray-900">Marketing Management</h2>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">Marketing interface coming soon</p>
-              <p className="text-sm text-gray-400">Features will include:</p>
-              <ul className="text-sm text-gray-400 mt-3 space-y-1">
-                <li>• WhatsApp, Facebook, Instagram integration</li>
-                <li>• Website vehicle posting</li>
-                <li>• Marketing campaign tracking</li>
-                <li>• Lead source analytics</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
+import{FormEvent,useEffect,useState}from"react";import{PageHeader}from"@/components/PageHeader";import{Megaphone,MessageCircle,Mail,RefreshCw,Users}from"lucide-react";
+type Customer={id:string;name:string;phone?:string;email?:string;lead_status?:string;marketing_consent?:number;purchased?:number;interested_make?:string;interested_model?:string};
+export function Marketing(){const[customers,setCustomers]=useState<Customer[]>([]);const[status,setStatus]=useState("");const[form,setForm]=useState({audience:"consented",channel:"whatsapp_email",campaign:"promotion",subject:"LRS Motors Update",message:""});async function load(){const r=await fetch("/api/customers",{cache:"no-store"});if(r.ok){const d=await r.json();setCustomers(Array.isArray(d)?d:d.customers||[])}}useEffect(()=>{load()},[]);const consented=customers.filter(c=>Number(c.marketing_consent)===1);const buyers=customers.filter(c=>Number(c.purchased)===1);const leads=customers.filter(c=>!Number(c.purchased));const audience=form.audience==="buyers"?buyers:form.audience==="leads"?leads:consented;
+async function queue(e:FormEvent){e.preventDefault();if(!form.message.trim())return setStatus("Enter a campaign message.");let ok=0;for(const c of audience){const channels=form.channel==="whatsapp_email"?["whatsapp","email"]:[form.channel];for(const channel of channels){if(channel==="whatsapp"&&!c.phone)continue;if(channel==="email"&&!c.email)continue;const r=await fetch("/api/message-queue",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({customerId:c.id,channel,to:channel==="email"?c.email:c.phone,subject:form.subject,message:form.message,campaignType:form.campaign})});if(r.ok)ok++}}setStatus(`${ok} customer messages added to the delivery queue.`)}
+return <div className="min-h-screen bg-lrs-light"><PageHeader title="Marketing Automation" description="Customer campaigns, vehicle alerts and communication queue"/><main className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6"><div className="grid md:grid-cols-3 gap-4"><Stat icon={<Users/>} label="Marketing Consent" n={consented.length}/><Stat icon={<Megaphone/>} label="Active Leads" n={leads.length}/><Stat icon={<Users/>} label="Purchased Customers" n={buyers.length}/></div><div className="grid lg:grid-cols-3 gap-6"><form onSubmit={queue} className="lg:col-span-2 bg-white border rounded-xl p-5 space-y-4"><h2 className="text-xl font-bold">Create Campaign</h2><div className="grid md:grid-cols-3 gap-3"><Select label="Audience" value={form.audience} set={x=>setForm({...form,audience:x})} options={[['consented','All Consented Customers'],['leads','Leads / Inquiries'],['buyers','Purchased Customers']]}/><Select label="Channel" value={form.channel} set={x=>setForm({...form,channel:x})} options={[['whatsapp_email','WhatsApp + Email'],['whatsapp','WhatsApp'],['email','Email']]}/><Select label="Campaign" value={form.campaign} set={x=>setForm({...form,campaign:x})} options={[['promotion','Promotion'],['festival','Festival Greeting'],['new_vehicle','New Vehicle Alert'],['follow_up','Customer Follow-up']]}/></div><label className="text-sm">Email Subject<input value={form.subject} onChange={e=>setForm({...form,subject:e.target.value})} className="block w-full border rounded-lg p-2 mt-1"/></label><label className="text-sm">Message<textarea rows={7} value={form.message} onChange={e=>setForm({...form,message:e.target.value})} placeholder="Write the approved LRS Motors customer message..." className="block w-full border rounded-lg p-3 mt-1"/></label><div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm">Selected audience: <b>{audience.length}</b>. Promotional campaigns should only be sent to customers with appropriate consent. Transactional sale/handover messages remain part of the Sales workflow.</div><button className="bg-lrs-primary text-white rounded-lg px-5 py-2 flex gap-2"><Megaphone className="w-4 h-4"/>Add Campaign to Queue</button>{status&&<div className="text-sm font-medium">{status}</div>}</form><aside className="bg-white border rounded-xl p-5"><h2 className="font-bold text-lg mb-4">Automation Centre</h2><div className="space-y-3"><Box icon={<MessageCircle/>} title="WhatsApp" text="Queued delivery through configured WhatsApp Business provider."/><Box icon={<Mail/>} title="Email" text="Queued delivery through configured email provider."/><Box icon={<RefreshCw/>} title="Customer Database" text="Campaign audiences are generated from the central CRM instead of separate lists."/></div></aside></div></main></div>}
+function Stat({icon,label,n}:{icon:React.ReactNode;label:string;n:number}){return <div className="bg-white border rounded-xl p-5 flex justify-between"><div><div className="text-sm text-gray-500">{label}</div><div className="text-3xl font-bold">{n}</div></div><div className="text-lrs-primary">{icon}</div></div>}function Box({icon,title,text}:{icon:React.ReactNode;title:string;text:string}){return <div className="border rounded-lg p-3"><div className="flex gap-2 font-semibold">{icon}{title}</div><p className="text-xs text-gray-500 mt-1">{text}</p></div>}function Select({label,value,set,options}:{label:string;value:string;set:(x:string)=>void;options:string[][]}){return <label className="text-sm">{label}<select value={value} onChange={e=>set(e.target.value)} className="block w-full border rounded-lg p-2 mt-1">{options.map(x=><option key={x[0]} value={x[0]}>{x[1]}</option>)}</select></label>}
