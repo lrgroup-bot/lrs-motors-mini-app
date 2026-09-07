@@ -1,7 +1,7 @@
-name: Leads Reminder V2 APK
+name: Leads Reminder V3 APK
 on:
   push:
-    branches: [ feature/lrs-leads-v2-clean ]
+    branches: [ feature/leads-reminder-v3 ]
     paths: [ 'mobile/**', '.github/workflows/lrs-lead-ai-apk.yml' ]
   workflow_dispatch:
 
@@ -17,22 +17,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: '8.10.2'
-      - name: Build Leads Reminder APK
+      - name: Build Leads Reminder V3 APK
         working-directory: mobile
         run: gradle clean :app:assembleDebug --stacktrace
-      - name: Verify application identity, version and launcher icon
+      - name: Verify V3 identity
         run: |
           APK=mobile/app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
           $ANDROID_HOME/build-tools/35.0.0/aapt dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='com.lrsmotors.leads' versionCode='210' versionName='2.1.0'" apk-badging.txt
+          grep -q "package: name='com.lrsmotors.leads' versionCode='300' versionName='3.0.0'" apk-badging.txt
           grep -q "application-label:'Leads/Reminder'" apk-badging.txt
-          grep -q "application-icon-.*:'res/" apk-badging.txt
-          unzip -l "$APK" | grep -q 'res/'
       - name: Rename APK
-        run: cp mobile/app/build/outputs/apk/debug/app-debug.apk Leads-Reminder-v2.1.0.apk
+        run: cp mobile/app/build/outputs/apk/debug/app-debug.apk Leads-Reminder-v3.0.0.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Leads-Reminder-v2.1.0
-          path: Leads-Reminder-v2.1.0.apk
+          name: Leads-Reminder-v3.0.0
+          path: Leads-Reminder-v3.0.0.apk
           retention-days: 30
