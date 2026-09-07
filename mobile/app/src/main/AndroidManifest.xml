@@ -1,17 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.READ_CALL_LOG" />
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <queries><package android:name="com.whatsapp" /><package android:name="com.whatsapp.w4b" /></queries>
-    <application android:theme="@style/Theme.LrsMotors" android:label="LRS Lead AI" android:allowBackup="true">
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
-        </activity>
-        <receiver android:name=".CallReceiver" android:exported="false">
-            <intent-filter><action android:name="android.intent.action.PHONE_STATE" /></intent-filter>
-        </receiver>
-        <receiver android:name=".ReminderReceiver" android:exported="false" />
-    </application>
-</manifest>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.READ_PHONE_STATE"/><uses-permission android:name="android.permission.READ_CALL_LOG"/><uses-permission android:name="android.permission.CALL_PHONE"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/><queries><package android:name="com.whatsapp"/><package android:name="com.whatsapp.w4b"/></queries><application android:theme="@style/Theme.LrsMotors" android:label="LRS Lead AI" android:icon="@drawable/ic_lrs_logo" android:roundIcon="@drawable/ic_lrs_logo" android:allowBackup="true"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity><receiver android:name=".CallReceiver" android:exported="true"><intent-filter><action android:name="android.intent.action.PHONE_STATE"/></intent-filter></receiver><receiver android:name=".ReminderReceiver" android:exported="false"/></application></manifest>
