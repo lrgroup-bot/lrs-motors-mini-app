@@ -12,8 +12,8 @@ android {
         applicationId = "com.lrsmotors.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0-leads"
+        versionCode = 3
+        versionName = "1.2.0-lrs-dashboard"
     }
 
     compileOptions {
@@ -21,13 +21,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
-    buildFeatures {
-        compose = true
-    }
+    kotlinOptions { jvmTarget = "17" }
+    buildFeatures { compose = true }
 }
 
 dependencies {
