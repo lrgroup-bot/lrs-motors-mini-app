@@ -1,7 +1,10 @@
 package com.lrsmotors.app
+
 import android.Manifest
-import android.app.*
-import android.content.*
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
@@ -18,15 +21,129 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-class MainActivity:ComponentActivity(){private val perms=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){recreate()};override fun onCreate(b:Bundle?){super.onCreate(b);perms.launch(arrayOf(Manifest.permission.READ_PHONE_STATE,Manifest.permission.READ_CALL_LOG,Manifest.permission.READ_PHONE_NUMBERS,Manifest.permission.CALL_PHONE,Manifest.permission.POST_NOTIFICATIONS));val p=intent.getStringExtra("action_phone")?:intent.getStringExtra("after_call_phone");setContent{App(this,p,intent.hasExtra("action_phone"))}}}
-@Composable fun App(c:Context,p0:String?,action:Boolean){val s=remember{LeadStore(c)};val sims=remember{SimCallResolver.sims(c)};var page by remember{mutableStateOf(if(SimCallResolver.selected(c)==null)"setup" else if(action)"action" else if(p0.isNullOrBlank())"home" else "edit")};var p by remember{mutableStateOf(p0.orEmpty())};var r by remember{mutableIntStateOf(0)};MaterialTheme(colorScheme=darkColorScheme()){if(page=="setup")Setup(c,sims){page="home"}else Scaffold(bottomBar={NavigationBar{NavigationBarItem(page=="home",{page="home"},{},{Text("Home")});NavigationBarItem(page=="leads",{page="leads"},{},{Text("Leads")});NavigationBarItem(false,{page="setup"},{},{Text("Business SIM")})}}){x->Box(Modifier.padding(x)){when(page){"leads"->Leads(s,r){p=it;page="edit"};"edit"->Editor(c,s,p){r++;page="leads"};"action"->Action(c,s,p);else->Dash(s,r,{p=it;page="action"},{page="leads"}){r++}}}}}}
-@Composable fun Setup(c:Context,sims:List<SimChoice>,done:()->Unit){Column(Modifier.fillMaxSize().padding(24.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){Text("LRS MOTORS",style=MaterialTheme.typography.headlineLarge);Text("Business Call Intelligence");Text("Choose the SIM used for customer enquiries. Other SIM calls are ignored.");sims.forEach{Button({SimCallResolver.saveSelected(c,it.subscriptionId);done()},Modifier.fillMaxWidth().height(56.dp)){Text(it.label)}};if(sims.isEmpty())Text("Allow Phone + Call Log permissions and reopen the app.")}}
-@Composable fun Dash(s:LeadStore,r:Int,action:(String)->Unit,all:()->Unit,refresh:()->Unit){val a=remember(r){s.all()};val now=System.currentTimeMillis();val due=a.filter{it.actionState!="DONE"&&it.actionDueAt!=null&&it.actionDueAt<=now};LazyColumn(Modifier.fillMaxSize().padding(18.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){item{Text("LRS MOTORS",style=MaterialTheme.typography.headlineLarge);Text("Lead Command Center")};item{Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){Metric("TOTAL",a.size.toString(),Modifier.weight(1f));Metric("HOT",a.count{it.status=="Hot"}.toString(),Modifier.weight(1f));Metric("DUE NOW",due.size.toString(),Modifier.weight(1f))}};item{Button(all,Modifier.fillMaxWidth().height(54.dp)){Text("OPEN LEAD DATABASE")}};item{Text("24-HOUR ACTIONS",style=MaterialTheme.typography.titleLarge);Text(if(due.isEmpty())"No customers have completed the 24-hour timeline." else "These customers are ready for follow-up.")};items(due,key={it.id}){l->var confirm by remember{mutableStateOf(false)};Card(Modifier.fillMaxWidth().shadow(10.dp)){Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){Column(Modifier.fillMaxWidth().clickable{action(l.phone)}){Text(if(l.name.isBlank())l.phone else l.name,style=MaterialTheme.typography.titleLarge);Text(l.phone);Text("${l.type} · ${l.vehicle}");Text("24 hours completed · Tap for WhatsApp / Call")};OutlinedButton({confirm=true},Modifier.fillMaxWidth()){Text("DELETE LEAD")};if(confirm)AlertDialog(onDismissRequest={confirm=false},title={Text("Delete this lead?")},text={Text("${if(l.name.isBlank())l.phone else l.name} will be permanently removed from the lead database and dashboard.")},confirmButton={TextButton({s.delete(l.phone);confirm=false;refresh()}){Text("DELETE")}},dismissButton={TextButton({confirm=false}){Text("CANCEL")}})}}}}}}
-@Composable fun Metric(t:String,v:String,m:Modifier){ElevatedCard(m.shadow(8.dp)){Column(Modifier.padding(14.dp)){Text(v,style=MaterialTheme.typography.headlineMedium);Text(t)}}}
-@Composable fun Leads(s:LeadStore,r:Int,open:(String)->Unit){var q by remember{mutableStateOf("")};var z by remember{mutableIntStateOf(0)};val a=remember(q,r,z){s.all(q)};Column(Modifier.fillMaxSize().padding(18.dp)){Text("Lead Database",style=MaterialTheme.typography.headlineMedium);Text("Only callers saved from the selected business SIM");OutlinedTextField(q,{q=it},label={Text("Search number, name, car or bike")},modifier=Modifier.fillMaxWidth());LazyColumn{items(a,key={it.id}){l->ElevatedCard(Modifier.fillMaxWidth().padding(vertical=6.dp).shadow(6.dp)){Column(Modifier.padding(14.dp)){Column(Modifier.clickable{open(l.phone)}){Text(if(l.name.isBlank())l.phone else l.name,style=MaterialTheme.typography.titleMedium);Text(l.phone);Text("${l.type} · ${l.vehicle} · ${l.status}")};TextButton({s.delete(l.phone);z++}){Text("Delete")}}}}}}}
-@Composable fun Editor(c:Context,s:LeadStore,seed:String,done:()->Unit){val p=LeadStore.normalize(seed);val o=remember(p){s.find(p)};var n by remember{mutableStateOf(o?.name.orEmpty())};var t by remember{mutableStateOf(o?.type?:"Car")};var v by remember{mutableStateOf(o?.vehicle.orEmpty())};var b by remember{mutableStateOf(o?.budget.orEmpty())};var note by remember{mutableStateOf(o?.notes.orEmpty())};LazyColumn(Modifier.fillMaxSize().padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){item{Text("New Caller",style=MaterialTheme.typography.headlineMedium);Text(p,style=MaterialTheme.typography.titleLarge);Text("Captured automatically from business SIM")};item{F("Name (optional)",n){n=it}};item{Row{FilterChip(t=="Car",{t="Car"},{Text("CAR")});Spacer(Modifier.width(10.dp));FilterChip(t=="Bike",{t="Bike"},{Text("BIKE")})}};item{F("Vehicle required",v){v=it}};item{F("Budget (optional)",b){b=it}};item{F("Notes (optional)",note){note=it}};item{Button({val due=System.currentTimeMillis()+86400000L;s.save(p,n,t,v,b,"New",note,due);schedule24(c,p,v,due);done()},enabled=p.isNotBlank()&&v.isNotBlank(),modifier=Modifier.fillMaxWidth().height(56.dp)){Text("SAVE CUSTOMER LEAD")}}}}
-@Composable fun Action(c:Context,s:LeadStore,p:String){val l=remember(p){s.find(p)};var wa by remember{mutableStateOf(l?.actionState=="WHATSAPP")};Column(Modifier.fillMaxSize().padding(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){Text("Customer Action",style=MaterialTheme.typography.headlineMedium);Text(l?.name?.ifBlank{p}?:p);Text(l?.vehicle.orEmpty());if(!wa)Button({whatsapp(c,p,l?.name.orEmpty(),l?.vehicle.orEmpty());s.setAction(p,"WHATSAPP");wa=true},Modifier.fillMaxWidth().height(56.dp)){Text("WHATSAPP")};Button({startCall(c,p);s.setAction(p,"CALLING");c.getSharedPreferences("call_state",Context.MODE_PRIVATE).edit().putString("pending_followup_call",p).apply()},Modifier.fillMaxWidth().height(56.dp)){Text("CALL CUSTOMER")};Text("After the follow-up call ends, this item disappears from the dashboard.")}}
-@Composable fun F(l:String,v:String,set:(String)->Unit){OutlinedTextField(v,set,label={Text(l)},modifier=Modifier.fillMaxWidth(),singleLine=true)}
-fun schedule24(c:Context,p:String,v:String,at:Long){val am=c.getSystemService(Context.ALARM_SERVICE) as AlarmManager;val pi=PendingIntent.getBroadcast(c,p.hashCode(),Intent(c,ReminderReceiver::class.java).putExtra("phone",p).putExtra("vehicle",v),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE);am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,at,pi)}
-fun whatsapp(c:Context,p:String,n:String,v:String){val text="Hello ${n.ifBlank{"Sir/Madam"}}, this is LRS Motors regarding ${v.ifBlank{"your vehicle enquiry"}}. Would you like to book a test drive?";c.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://wa.me/91${LeadStore.normalize(p)}?text=${Uri.encode(text)}")))}
-fun startCall(c:Context,p:String){val u=Uri.parse("tel:$p");if(ContextCompat.checkSelfPermission(c,Manifest.permission.CALL_PHONE)==PackageManager.PERMISSION_GRANTED)c.startActivity(Intent(Intent.ACTION_CALL,u))else c.startActivity(Intent(Intent.ACTION_DIAL,u))}
+
+class MainActivity : ComponentActivity() {
+    private val perms = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { recreate() }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        perms.launch(arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.CALL_PHONE, Manifest.permission.POST_NOTIFICATIONS))
+        val phone = intent.getStringExtra("action_phone") ?: intent.getStringExtra("after_call_phone")
+        setContent { App(this, phone, intent.hasExtra("action_phone")) }
+    }
+}
+
+@Composable
+fun App(context: Context, initialPhone: String?, actionIntent: Boolean) {
+    val store = remember { LeadStore(context) }
+    val sims = remember { SimCallResolver.sims(context) }
+    var page by remember { mutableStateOf(if (SimCallResolver.selected(context) == null) "setup" else if (actionIntent) "action" else if (initialPhone.isNullOrBlank()) "home" else "edit") }
+    var phone by remember { mutableStateOf(initialPhone.orEmpty()) }
+    var refresh by remember { mutableIntStateOf(0) }
+
+    MaterialTheme(colorScheme = darkColorScheme()) {
+        if (page == "setup") {
+            Setup(context, sims) { page = "home" }
+        } else {
+            Scaffold(bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(selected = page == "home", onClick = { page = "home" }, icon = {}, label = { Text("Home") })
+                    NavigationBarItem(selected = page == "leads", onClick = { page = "leads" }, icon = {}, label = { Text("Leads") })
+                    NavigationBarItem(selected = false, onClick = { page = "setup" }, icon = {}, label = { Text("Business SIM") })
+                }
+            }) { padding ->
+                Box(Modifier.padding(padding)) {
+                    when (page) {
+                        "leads" -> Leads(store, refresh) { phone = it; page = "edit" }
+                        "edit" -> Editor(context, store, phone) { refresh++; page = "leads" }
+                        "action" -> Action(context, store, phone)
+                        else -> Dash(store, refresh, action = { phone = it; page = "action" }, all = { page = "leads" }, refresh = { refresh++ })
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun Setup(context: Context, sims: List<SimChoice>, done: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text("LRS MOTORS", style = MaterialTheme.typography.headlineLarge)
+        Text("Business Call Intelligence")
+        Text("Choose the SIM used for customer enquiries. Other SIM calls are ignored.")
+        sims.forEach { sim -> Button(onClick = { SimCallResolver.saveSelected(context, sim.subscriptionId); done() }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(sim.label) } }
+        if (sims.isEmpty()) Text("Allow Phone + Call Log permissions and reopen the app.")
+    }
+}
+
+@Composable
+fun Dash(store: LeadStore, refreshKey: Int, action: (String) -> Unit, all: () -> Unit, refresh: () -> Unit) {
+    val leads = remember(refreshKey) { store.all() }
+    val now = System.currentTimeMillis()
+    val due = leads.filter { it.actionState != "DONE" && it.actionDueAt != null && it.actionDueAt <= now }
+    LazyColumn(Modifier.fillMaxSize().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { Text("LRS MOTORS", style = MaterialTheme.typography.headlineLarge); Text("Lead Command Center") }
+        item { Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { Metric("TOTAL", leads.size.toString(), Modifier.weight(1f)); Metric("HOT", leads.count { it.status == "Hot" }.toString(), Modifier.weight(1f)); Metric("DUE NOW", due.size.toString(), Modifier.weight(1f)) } }
+        item { Button(onClick = all, modifier = Modifier.fillMaxWidth().height(54.dp)) { Text("OPEN LEAD DATABASE") } }
+        item { Text("24-HOUR ACTIONS", style = MaterialTheme.typography.titleLarge); Text(if (due.isEmpty()) "No customers have completed the 24-hour timeline." else "These customers are ready for follow-up.") }
+        items(due, key = { it.id }) { lead -> DashboardLeadCard(store, lead, action, refresh) }
+    }
+}
+
+@Composable
+fun DashboardLeadCard(store: LeadStore, lead: Lead, action: (String) -> Unit, refresh: () -> Unit) {
+    var confirmDelete by remember { mutableStateOf(false) }
+    Card(Modifier.fillMaxWidth().shadow(10.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.fillMaxWidth().clickable { action(lead.phone) }) {
+                Text(if (lead.name.isBlank()) lead.phone else lead.name, style = MaterialTheme.typography.titleLarge)
+                Text(lead.phone)
+                Text("${lead.type} · ${lead.vehicle}")
+                Text("24 hours completed · Tap for WhatsApp / Call")
+            }
+            OutlinedButton(onClick = { confirmDelete = true }, modifier = Modifier.fillMaxWidth()) { Text("DELETE LEAD") }
+        }
+    }
+    if (confirmDelete) {
+        AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text("Delete this lead?") }, text = { Text("${if (lead.name.isBlank()) lead.phone else lead.name} will be permanently removed from the lead database and dashboard.") }, confirmButton = { TextButton(onClick = { store.delete(lead.phone); confirmDelete = false; refresh() }) { Text("DELETE") } }, dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("CANCEL") } })
+    }
+}
+
+@Composable fun Metric(title: String, value: String, modifier: Modifier) { ElevatedCard(modifier.shadow(8.dp)) { Column(Modifier.padding(14.dp)) { Text(value, style = MaterialTheme.typography.headlineMedium); Text(title) } } }
+
+@Composable
+fun Leads(store: LeadStore, refreshKey: Int, open: (String) -> Unit) {
+    var query by remember { mutableStateOf("") }; var localRefresh by remember { mutableIntStateOf(0) }; val leads = remember(query, refreshKey, localRefresh) { store.all(query) }
+    Column(Modifier.fillMaxSize().padding(18.dp)) {
+        Text("Lead Database", style = MaterialTheme.typography.headlineMedium); Text("Only callers saved from the selected business SIM")
+        OutlinedTextField(query, { query = it }, label = { Text("Search number, name, car or bike") }, modifier = Modifier.fillMaxWidth())
+        LazyColumn { items(leads, key = { it.id }) { lead -> ElevatedCard(Modifier.fillMaxWidth().padding(vertical = 6.dp).shadow(6.dp)) { Column(Modifier.padding(14.dp)) { Column(Modifier.clickable { open(lead.phone) }) { Text(if (lead.name.isBlank()) lead.phone else lead.name, style = MaterialTheme.typography.titleMedium); Text(lead.phone); Text("${lead.type} · ${lead.vehicle} · ${lead.status}") }; TextButton(onClick = { store.delete(lead.phone); localRefresh++ }) { Text("Delete") } } } } }
+    }
+}
+
+@Composable
+fun Editor(context: Context, store: LeadStore, seed: String, done: () -> Unit) {
+    val phone = LeadStore.normalize(seed); val old = remember(phone) { store.find(phone) }; var name by remember { mutableStateOf(old?.name.orEmpty()) }; var type by remember { mutableStateOf(old?.type ?: "Car") }; var vehicle by remember { mutableStateOf(old?.vehicle.orEmpty()) }; var budget by remember { mutableStateOf(old?.budget.orEmpty()) }; var notes by remember { mutableStateOf(old?.notes.orEmpty()) }
+    LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { Text("New Caller", style = MaterialTheme.typography.headlineMedium); Text(phone, style = MaterialTheme.typography.titleLarge); Text("Captured automatically from business SIM") }
+        item { Field("Name (optional)", name) { name = it } }
+        item { Row { FilterChip(selected = type == "Car", onClick = { type = "Car" }, label = { Text("CAR") }); Spacer(Modifier.width(10.dp)); FilterChip(selected = type == "Bike", onClick = { type = "Bike" }, label = { Text("BIKE") }) } }
+        item { Field("Vehicle required", vehicle) { vehicle = it } }; item { Field("Budget (optional)", budget) { budget = it } }; item { Field("Notes (optional)", notes) { notes = it } }
+        item { Button(onClick = { val due = System.currentTimeMillis() + 86_400_000L; store.save(phone, name, type, vehicle, budget, "New", notes, due); schedule24(context, phone, vehicle, due); done() }, enabled = phone.isNotBlank() && vehicle.isNotBlank(), modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("SAVE CUSTOMER LEAD") } }
+    }
+}
+
+@Composable
+fun Action(context: Context, store: LeadStore, phone: String) {
+    val lead = remember(phone) { store.find(phone) }; var whatsappSelected by remember { mutableStateOf(lead?.actionState == "WHATSAPP") }
+    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text("Customer Action", style = MaterialTheme.typography.headlineMedium); Text(lead?.name?.ifBlank { phone } ?: phone); Text(lead?.vehicle.orEmpty())
+        if (!whatsappSelected) Button(onClick = { whatsapp(context, phone, lead?.name.orEmpty(), lead?.vehicle.orEmpty()); store.setAction(phone, "WHATSAPP"); whatsappSelected = true }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("WHATSAPP") }
+        Button(onClick = { startCall(context, phone); store.setAction(phone, "CALLING"); context.getSharedPreferences("call_state", Context.MODE_PRIVATE).edit().putString("pending_followup_call", phone).apply() }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("CALL CUSTOMER") }
+        Text("After the follow-up call ends, this item disappears from the dashboard.")
+    }
+}
+
+@Composable fun Field(label: String, value: String, set: (String) -> Unit) { OutlinedTextField(value, set, label = { Text(label) }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
+fun schedule24(context: Context, phone: String, vehicle: String, at: Long) { val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager; val pending = PendingIntent.getBroadcast(context, phone.hashCode(), Intent(context, ReminderReceiver::class.java).putExtra("phone", phone).putExtra("vehicle", vehicle), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE); alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending) }
+fun whatsapp(context: Context, phone: String, name: String, vehicle: String) { val text = "Hello ${name.ifBlank { "Sir/Madam" }}, this is LRS Motors regarding ${vehicle.ifBlank { "your vehicle enquiry" }}. Would you like to book a test drive?"; context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/91${LeadStore.normalize(phone)}?text=${Uri.encode(text)}"))) }
+fun startCall(context: Context, phone: String) { val uri = Uri.parse("tel:$phone"); if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) context.startActivity(Intent(Intent.ACTION_CALL, uri)) else context.startActivity(Intent(Intent.ACTION_DIAL, uri)) }
