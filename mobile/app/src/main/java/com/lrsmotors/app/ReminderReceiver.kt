@@ -1,21 +1,5 @@
 package com.lrsmotors.app
-
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
+import android.app.*
+import android.content.*
 import androidx.core.app.NotificationCompat
-
-class ReminderReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val phone=intent.getStringExtra("phone") ?: return
-        val vehicle=intent.getStringExtra("vehicle").orEmpty()
-        val manager=context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(NotificationChannel("followups","Lead follow-ups",NotificationManager.IMPORTANCE_HIGH))
-        val open=PendingIntent.getActivity(context, phone.hashCode(), Intent(context,MainActivity::class.java).putExtra("after_call_phone",phone), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val n=NotificationCompat.Builder(context,"followups").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("LRS Lead follow-up").setContentText("Call $phone${if(vehicle.isBlank()) "" else " · $vehicle"}").setAutoCancel(true).setContentIntent(open).build()
-        manager.notify(phone.hashCode(),n)
-    }
-}
+class ReminderReceiver:BroadcastReceiver(){override fun onReceive(c:Context,i:Intent){val p=i.getStringExtra("phone")?:return;val v=i.getStringExtra("vehicle").orEmpty();val nm=c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager;nm.createNotificationChannel(NotificationChannel("lead24","24 hour lead actions",NotificationManager.IMPORTANCE_HIGH));val open=PendingIntent.getActivity(c,p.hashCode(),Intent(c,MainActivity::class.java).putExtra("action_phone",p).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE);nm.notify(p.hashCode(),NotificationCompat.Builder(c,"lead24").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("LRS Motors · Customer follow-up").setContentText("24 hours completed${if(v.isBlank())"" else " · $v"}. Choose WhatsApp or Call.").setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setContentIntent(open).build())}}
