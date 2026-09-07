@@ -19,11 +19,19 @@ jobs:
           gradle-version: '8.10.2'
       - name: Build APK
         working-directory: mobile
-        run: gradle assembleDebug --stacktrace
-      - name: Rename APK
-        run: cp mobile/app/build/outputs/apk/debug/app-debug.apk LRS-Lead-AI.apk
+        run: gradle clean assembleDebug --stacktrace
+      - name: Verify packaged APK
+        run: |
+          APK=mobile/app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          $ANDROID_HOME/build-tools/35.0.0/aapt dump badging "$APK" | tee apk-badging.txt
+          grep -q "package: name='com.lrsmotors.app' versionCode='4' versionName='1.3.0-verified-dashboard'" apk-badging.txt
+          grep -q "application-label:'LRS Motors'" apk-badging.txt
+          grep -q "application-icon-.*:'res/" apk-badging.txt
+      - name: Rename verified APK
+        run: cp mobile/app/build/outputs/apk/debug/app-debug.apk LRS-Motors-v1.3.0-VERIFIED.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: LRS-Lead-AI-APK
-          path: LRS-Lead-AI.apk
+          name: LRS-Motors-v1.3.0-VERIFIED
+          path: LRS-Motors-v1.3.0-VERIFIED.apk
           retention-days: 30
