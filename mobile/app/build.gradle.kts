@@ -4,9 +4,30 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-android { namespace = "com.lrsmotors.app"; compileSdk = 35
-    defaultConfig { applicationId = "com.lrsmotors.app"; minSdk = 26; targetSdk = 35; versionCode = 2; versionName = "1.1.0-leads" }
-    buildFeatures { compose = true }
+android {
+    namespace = "com.lrsmotors.app"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.lrsmotors.app"
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 2
+        versionName = "1.1.0-leads"
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildFeatures {
+        compose = true
+    }
 }
 
 dependencies {
