@@ -1,4 +1,4 @@
-name: LRS Motors Leads V2 APK
+name: Leads Reminder V2 APK
 on:
   push:
     branches: [ feature/lrs-leads-v2-clean ]
@@ -17,21 +17,21 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: '8.10.2'
-      - name: Build NEW APK
+      - name: Build Leads Reminder APK
         working-directory: mobile
         run: gradle clean :app:assembleDebug --stacktrace
-      - name: Verify NEW application identity
+      - name: Verify application identity and launcher icon
         run: |
           APK=mobile/app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
           $ANDROID_HOME/build-tools/35.0.0/aapt dump badging "$APK" | tee apk-badging.txt
           grep -q "package: name='com.lrsmotors.leads' versionCode='200' versionName='2.0.0'" apk-badging.txt
-          grep -q "application-label:'LRS Motors'" apk-badging.txt
+          grep -q "application-label:'Leads/Reminder'" apk-badging.txt
           grep -q "application-icon-.*:'res/" apk-badging.txt
       - name: Rename APK
-        run: cp mobile/app/build/outputs/apk/debug/app-debug.apk LRS-Motors-Leads-V2.apk
+        run: cp mobile/app/build/outputs/apk/debug/app-debug.apk Leads-Reminder-V2.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: LRS-Motors-Leads-V2-NEW
-          path: LRS-Motors-Leads-V2.apk
+          name: Leads-Reminder-V2
+          path: Leads-Reminder-V2.apk
           retention-days: 30
